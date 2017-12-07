@@ -9,7 +9,7 @@ const thisFilename = dpbutils.pluckFilename(__filename, __dirname);
 dpbutils.loginfo(`'${thisFilename}' Started`);
 /* Initialize AWS Config parameters and Initialize client    */
 
-/* Initialize data inputs */
+/* Initialize data inputs to DynamoDB */
 var userid  = "db00001";
 
 /* Set up DynamoDB getItem input parms */
