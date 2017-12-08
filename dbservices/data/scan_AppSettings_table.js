@@ -8,8 +8,8 @@ AWS.config.update({
 var docClient = new AWS.DynamoDB.DocumentClient();
 
 var params = {
-    TableName: "AppSettings",
-    ProjectionExpression: "userid, appcode, appSettings",
+    TableName: "app-settings",
+    ProjectionExpression: "userid, appcode, lastChecklistId, locationReminders ",
     /* ProjectionExpression: "#yr, title, info.rating",
     FilterExpression: "#yr between :start_yr and :end_yr",
     ExpressionAttributeNames: {
@@ -22,7 +22,7 @@ var params = {
     */
 };
 
-console.log("Scanning AppSetings table.");
+console.log("Scanning app-settings table.");
 docClient.scan(params, onScan);
 
 function onScan(err, data) {
@@ -33,9 +33,10 @@ function onScan(err, data) {
         console.log("Scan succeeded.");
         data.Items.forEach(function(as) {
            console.log(
-                as.userid + "\n",
-                as.appcode + "\n",
-                as.appSettings);
+                "userid: " + as.userid + " ",
+                "appcode: " + as.appcode + "\n",
+                "lastChecklistId: " + as.lastChecklistId  + " " + 
+                "locationReminders: " +  as.locationReminders + "\n");
         });
 
         // continue scanning if we have more movies, because

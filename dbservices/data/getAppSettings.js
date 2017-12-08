@@ -1,45 +1,32 @@
-var dpbutils   = require("./../utils/dpbutils");
-var dbtools    = require("./../dbutils/dbtools");
+var dbtools = require("./../dbutils/dbtools");
+var dpbutils = require("./../utils/dpbutils");
 
+// Intialize file name for logging purposes
 const thisFilename = dpbutils.pluckFilename(__filename, __dirname);
 
-// ***************************************************************************
-// ** Sample DynamoDB getItem program
-// ***************************************************************************
+// Log file execution has started
 dpbutils.loginfo(`'${thisFilename}' Started`);
-/* Initialize AWS Config parameters and Initialize client    */
 
-/* Initialize data inputs to DynamoDB */
-var userid  = "db00001";
-
-/* Set up DynamoDB getItem input parms */
+// Set up parameters
 db_getter = new dbtools.DbGetItem();
 db_getter.setTableName("AppSettings");
-db_getter.setPrimaryKey("userid", userid);
+db_getter.setPrimaryKey("userid", "db00001");
 db_getter.setSortKey("appcode","hmc");
-db_getter.execute(dbcallback);    // The Execute dbcallback function is defined below
 
-/* Define Dynamodb call back logic here */
-function dbcallback(err, data) {
-  try {
-      if (err) {
-          throw new Error("DynamoDb: check all input parms for accuracy");
-      } else {
-          console.log("===================================");
-          console.log(`AppSettings for user: ${userid} `);
-          console.log("===================================");
-          if (db_getter.hasResultSet(data)) {
-            console.log(JSON.stringify(data.Item, null, 2));
-          } else {
-            dpbutils.logerror(`'${thisFilename}' Resultset empty for follwowing input parameters: `);
-            // console.log(`Record with key structure below, not found \n${db_getter.keyUsed()}`);
-            db_getter.toString();
-         }
-      } /* else end */
-    } /* end try */
-  catch (e) {
-    dpbutils.logerror(`'${thisFilename}' ${e.name} ${e.message} ${e.stack}`);
-  } finally {
-    dpbutils.loginfo(`'${thisFilename}' Ended`);
-  }
-};
+// Execute database call
+db_getter.executeDbRequest(db_getter.dbParms()).then(function(data) {
+    if (db_getter.hasResultSet(data)) {
+      console.log(JSON.stringify(data.Item, null, 2));
+    } else {
+      dpbutils.loginfo(`'${thisFilename}' Resultset empty for follwowing input parameters: `);
+      console.log(JSON.stringify(db_getter.dbParms(), null, 2));
+   }
+
+  //  Log DB request has Ended
+  dpbutils.loginfo(`'${thisFilename}' Ended`);
+
+}).catch(function(err) {
+      console.log("*********** Error Encountered *******************");
+      console.log(err, err.stack);
+      console.log("*********** End of Error text *******************");
+})

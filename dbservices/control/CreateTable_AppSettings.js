@@ -8,7 +8,7 @@ AWS.config.update({
 var dynamodb = new AWS.DynamoDB();
 
 var params = {
-    TableName : "AppSettings",
+    TableName : "app-settings",
     KeySchema: [
         { AttributeName: "userid", KeyType: "HASH"},  //Partition key
         { AttributeName: "appcode", KeyType: "RANGE" }  //Sort key

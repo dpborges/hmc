@@ -1,13 +1,11 @@
-var aws = require("./aws");
+var awsconfig = require("./aws");
 var _   = require("lodash");
 
-AWS = aws.AWS;
+AWS = awsconfig.AWS;
 
 function DbGetItem ()  {
   this.parameter = {};      // Initialize dynamodb params object
   this.parameter.Key = {};  // Initialized dynamodb Key object
-  this.docClient = new AWS.DynamoDB.DocumentClient();
-
   this.pkname = undefined;
   this.pkvalue = undefined;
 };
@@ -28,8 +26,21 @@ DbGetItem.prototype = {
       this.parameter.Key[sortkeyname] = sortkeyvalue;
   },
 
-  execute: function (callback) {
-      this.docClient.get(db_getter.parameter, callback); /* docClient.get end */
+  executeDbRequest: function (params) {
+     var promise = new Promise(
+         function resolver(resolve, reject) {
+           // Provide primary key and sort key values in the dynaomdb params object
+          var docClient = new AWS.DynamoDB.DocumentClient();
+          docClient.get(params, function(err, data) {
+             if (err) {
+               reject(err);
+             } else {
+               resolve(data);
+             }
+           }); /* end of docClient.get */
+        } /* end of resolver */
+    );
+    return promise;
   },
 
   hasResultSet: function (result) {return !(_.isEmpty(result)); },
@@ -38,7 +49,14 @@ DbGetItem.prototype = {
     return JSON.stringify(this.parameter.Key, null, 2);
   },
 
-  toString: function () {console.log(JSON.stringify(this.parameter, null, 2));}
+  dbParms:  function () {
+    // return JSON.stringify(this.parameter, null, 2);
+    return this.parameter;
+  },
+
+  toString: function () {
+    console.log(JSON.stringify(this.parameter, null, 2));
+  }
 }
 
 module.exports = {
