@@ -9,7 +9,7 @@ dpbutils.loginfo(`'${thisFilename}' Started`);
 
 // Set up parameters
 db_getter = new dbtools.DbGetItem();
-db_getter.setTableName("AppSettings");
+db_getter.setTableName("app-settings");
 db_getter.setPrimaryKey("userid", "db00001");
 db_getter.setSortKey("appcode","hmc");
 
