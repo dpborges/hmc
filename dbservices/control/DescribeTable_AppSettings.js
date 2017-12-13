@@ -8,7 +8,7 @@ AWS.config.update({
 var dynamodb = new AWS.DynamoDB();
 
 var params = {
-    "TableName": "AppSettings",
+    "TableName": "app-settings",
 };
 
 dynamodb.describeTable(params, function(err, data) {

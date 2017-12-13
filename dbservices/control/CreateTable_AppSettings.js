@@ -8,7 +8,7 @@ AWS.config.update({
 var dynamodb = new AWS.DynamoDB();
 
 var params = {
-    TableName : "app-settings",
+    TableName : "AppSettings",
     KeySchema: [
         { AttributeName: "userid", KeyType: "HASH"},  //Partition key
         { AttributeName: "appcode", KeyType: "RANGE" }  //Sort key
@@ -16,6 +16,8 @@ var params = {
     AttributeDefinitions: [
         { AttributeName: "userid", AttributeType: "S" },
         { AttributeName: "appcode", AttributeType: "S" }
+        // { AttributeName: "last_checklist_id", AttributeType: "N" },
+        // { AttributeName: "location_reminders", AttributeType: "N" }
     ],
     ProvisionedThroughput: {
         ReadCapacityUnits: 30,
