@@ -22,13 +22,15 @@ const loginfo = (infotext) =>  {
 }
 
 // Log error text
-const logerror = (errortext) =>  {
+const logerror = (errortext, errorstack) =>  {
   var logformat = "YYYY-MM-DD hh:mm:ss SSSS";
-  winston.error(`${moment().format(logformat)} ${errortext}  `);
+  if (!errorstack) errorstack = "";
+  winston.error(`${moment().format(logformat)} ${errortext} ${errorstack}  `);
 }
 
 module.exports = {
   pluckFilename,
   loginfo,
-  logerror
+  logerror,
+  loginfo_enabled
 }
