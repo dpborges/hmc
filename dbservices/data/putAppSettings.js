@@ -8,37 +8,37 @@ const thisFilename = dpbutils.pluckFilename(__filename, __dirname);
 // Log file execution has started
 dpbutils.loginfo(`'${thisFilename}' Started`);
 
+/* ========================================================================== */
+/* Set up: provide put values and condition to do a put only PK does not exist
+/* ========================================================================== */
+
 /* provide values you would like to insert into table  */
 var putValues = {
-  userid:   "db00450|hmc",
+  userid:   "db00551|hmc",
   appcode:  "hmc",
-  lastChecklistId: 257,
+  lastChecklistId: 12,
   locationReminders: true
 };
 
 /* Pass in table name and the putValues to DbPutItem constructor */
 var db_puter  = new dbtools.DbPutItem("AppSettings", putValues);
 
-var parms = db_puter.dbParms();           // retrieve params from db_puter object
-parms.setNotExistConditionOn("userid");   // set condition such you execute put only
-                                          //     if userid does not exist in table
+db_puter.setNotExistConditionOn("userid");   // set condition such you execute put only
+                                            //     if userid does not exist in table
+
+/* ========================================================================== */
+/* Execute PutItem command
+/* ========================================================================== */
 
 /* execute Put item database request */
-db_puter.executeDbRequest(parms).then(function(data) {
-  if (dpbutils.loginfo_enabled) {
-    dpbutils.loginfo(`'${thisFilename}' Put Item request completed successfully: ${JSON.stringify(parms,null,2)}`);
-  }
+db_puter.executeDbRequest(db_puter.dbParms()).then(function(data) {
+    if (dpbutils.loginfo_enabled) {
+      dpbutils.loginfo(`'${thisFilename}' Put Item request completed successfully: ${JSON.stringify(db_puter.dbParms(),null,2)}`);
+    }
 
-  //  Log DB request has Ended
-  dpbutils.loginfo(`'${thisFilename}' Ended`);
+    //  Log DB request has Ended
+    dpbutils.loginfo(`'${thisFilename}' Ended`);
 }).catch(function(err) {
-      dpbutils.logerror(`'${thisFilename}' >>>>>>> Error Encountered <<<<<<<`);
-      if (err === "ConditionalCheckFailedException") {
-        dpbutils.logerror(`'${thisFilename}' Put Item Failed with 'ConditionalCheckFailedException'`);
-        dpbutils.logerror(`'${thisFilename}' Primary already exist in table: ${JSON.stringify(parms, null,2)}`);
-      } else {
-        dpbutils.logerror(`'${thisFilename}' Input parameters used: ${JSON.stringify(parms, null,2)}`);
-        dpbutils.logerror(err, err.stack);
-      }
-      dpbutils.logerror(`'${thisFilename}' >>>>>>> End of Error text <<<<<<<`);
+  // Call errorhandler with err object, the filname, the operationName, and Parms
+  dpbutils.errorHandler(err, thisFilename, "PutItem", db_puter.dbParms());
 })
