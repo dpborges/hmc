@@ -316,18 +316,19 @@ DbDeleteItem.prototype = {
 function DbQuery ()  {
   this.parameter = {};
   this.parameter.TableName = undefined;
-  this.parameter.KeyConditionExpression = " ";
+  this.parameter.KeyConditionExpression = "";
   // this.parameter.FilterExpression = "";  ADD THIS ONLY WITH FILTER METHOD
   this.parameter.ExpressionAttributeValues = {};
   this.fieldcounter = 0;
-  this.lastMethodCalled = undefined;     // This is set to either theFilterAttribute or selectItemsWhere
+  this.lastMethodCalled = undefined;     // This is set to either where,
+  // selectItemsWherePrimaryKey, theSortKey.
   // The is() method will append value to key condition expression or filter expression
   // depending on which method was called last called.
-  this.primarykey = "";
-  this.sortkey = "";
+  // this.primarykey = "";
+  // this.sortkey = "";
   this.lastAttribute = "";    // this is last attribute
-  this.lastMatchPattern = ""; // this is parameter passed in the matchesPattern method.
-  this.lastPredicate = "";    // This is either "is"  or "matchesPattern"
+  this.lastMatchPattern = ""; // this is parameter passed in the matchPattern method.
+  this.lastPredicate = "";    // This is either "is"  or "matchPattern"
 };
 
 DbQuery.prototype = {
@@ -337,70 +338,63 @@ DbQuery.prototype = {
     return this;
   },
 
-  selectItemsWhere: function selectItemsWhere (attribName) {
-    // Key condition is immediately initialized here as primary key is first
-    // criteria used for query
-    this.parameter.KeyConditionExpression = `${attribName}`;
-    this.sortkey = attribName;  // save attribute name
-    // this.pkvalue = pkvalue;
-    this.lastMethodCalled = "selectItemsWhere";
+  selectItemsWherePrimaryKey: function selectItemsWherePrimaryKey (attribName) {
+    // Save lastAttribute and lastMethodCalled so subsequent predicate function
+    // knows how to format params based on whether predicate "matchPatter" or "is"
+    this.lastAttribute = attribName;
+    this.lastMethodCalled = "selectItemsWherePrimaryKey";
     return this;
   },
 
   is: function is (operator) {
-    if (this.lastMethodCalled === "selectItemsWhere") { // then add opertion to KeyConditionExpression
-      this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + " " + operator ;
-    } else { // add operater to FilterExpression
+    var theAppendString = "";
+
+    if (this.parameter.KeyConditionExpression.length > 3) {
+      var theAppendString =  theAppendString + " and ";
+    }
+
+    if (this.lastMethodCalled === "theSortKey" || this.lastMethodCalled === "selectItemsWherePrimaryKey")
+    {
+      var theAppendString = theAppendString + `${this.lastAttribute} ${operator}`;
+      this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + theAppendString ;
+    }
+
+    if (this.lastMethodCalled === "where")
+    {
+      var theAppendString = theAppendString + `${this.lastAttribute} ${operator}`;
       this.parameter.FilterExpression = this.parameter.FilterExpression + " " + operator;
     }
-    //
-    // if (this.lastMethodCalled === "andWhere") { // then add opertion to FilterExpression
-    //   this.parameter.FilterExpression = this.parameter.FilterExpression + " " + operator;
-    // } else { // add operater to FilterExpression
-    //   // this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + " " + operator ;
-    // }
+
     this.lastPredicate = "is";
     return this;
   },
 
   theValue: function theValue (value) {
-    console.log("01");
-    console.log("lastmethodcalled = ", this.lastMethodCalled);
-    console.log("lastPredicate = ", this.lastPredicate);
 
-    if ((this.lastMethodCalled === "selectItemsWhere") && (this.lastPredicate === "is"))
-    { // then add opertion to KeyConditionExpression
-      console.log("02");
+    if ((this.lastMethodCalled === "theSortKey" || this.lastMethodCalled === "selectItemsWherePrimaryKey")
+        && (this.lastPredicate === "is"))
+    { //append generated placeholder to KeyCondition Expression and
+      //the placeholder and value to ExpressionAttributeValues
       this.fieldcounter++;
       this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + " :v" + this.fieldcounter;
       this.parameter.ExpressionAttributeValues[":v" + this.fieldcounter] = value;
     }
 
-    if (this.lastMethodCalled === "selectItemsWhere" && this.lastPredicate === "matchesPattern")
-    {
-      console.log("03");
-      var theAppendString = "";
-
-      // theAppendString = theAppendString + this.lastAttribute + ",";
-      console.log(theAppendString);
-      if (this.lastMatchPattern === "begins_with" || this.lastMatchPattern ==="contains") {
-        //  theAppendString = theAppendString +  " :v" + this.fieldcounter;
-        theAppendString = theAppendString + this.lastAttribute + ",";
-        console.log(theAppendString);
-        this.fieldcounter++;
-        theAppendString = theAppendString + " :v" + this.fieldcounter + ")";
-        console.log(theAppendString);
-        this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + theAppendString;
-        this.parameter.ExpressionAttributeValues[":v" + this.fieldcounter] = value;
-      }
-      // this.parameter.ExpressionAttributeValues[":v" + this.fieldcounter] = value;
+    if ((this.lastMethodCalled === "theSortKey" || this.lastMethodCalled === "selectItemsWherePrimaryKey")
+         && (this.lastPredicate === "matchPattern"))
+    { // same as 1st if statement, but tacking on close parens
+      this.fieldcounter++;
+      this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + " :v" + this.fieldcounter + ")";
+      this.parameter.ExpressionAttributeValues[":v" + this.fieldcounter] = value;
     }
-    if (this.lastMethodCalled === "andWhere" && this.lastPredicate === "is")
-    {
+
+    if ((this.lastMethodCalled === "where") && (this.lastPredicate === "is"))
+    { //append to Filter Expression and ExpressionAttributeValues
       this.fieldcounter++;
       this.parameter.FilterExpression = this.parameter.FilterExpression + " :v" + this.fieldcounter;
       this.parameter.ExpressionAttributeValues[":v" + this.fieldcounter] = value;
     }
+
     return this;
   },
 
@@ -408,7 +402,7 @@ DbQuery.prototype = {
   //   var theAppendString = "";
   //   console.log('LAST PATTERN ', this.lastMatchPattern);
   //   console.log('LAST ATTRIB ', this.lastAttribute);
-  //   if (this.lastMethodCalled === "selectItemsWhere") {
+  //   if (this.lastMethodCalled === "selectItemsWherePrimaryKey") {
   //     theAppendString = theAppendString + this.lastAttribute + ",";
   //
   //     if (this.lastMatchPattern === "begins_with") {
@@ -420,13 +414,13 @@ DbQuery.prototype = {
 
   where: function where (theAttrib) {
     this.parameter.FilterExpression = theAttrib;
-    this.lastMethodCalled = "andWhere";
+    this.lastMethodCalled = "where";
     return this;
  },
 
   theAttribute: function theAttribute (theAttrib) {
     var theAppendString = "";
-    if (this.lastMethodCalled === "selectItemsWhere") {
+    if (this.lastMethodCalled === "selectItemsWherePrimaryKey") {
       if (this.parameter.KeyConditionExpression.length > 2)
       { // then append literal 'and'  with the attribute name
         theAppendString = theAppendString + " and";
@@ -437,37 +431,30 @@ DbQuery.prototype = {
    } else {
      ;
    }
-    // (this.lastMethodCalled === "selectItemsWhere")
-    //   if (this.parameter.KeyConditionExpression.length > 2) { // append the literal 'and'
-    //     this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + " and"
-    //   }
-    //   // append the attribute name
-    //   this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + " " + theAttrib;
-    //   // this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + " " + this.fieldcounter ;
-    //   // this.parameter.ExpressionAttributeValues[":v" + this.fieldcounter];
-    // } else {
-    //   ;
-    // }
+ },
+
+ theSortKey: function theSortKey (theAttrib) {
+    // Save lastAttribute and lastMethodCalled so subsequent predicate function
+    // knows how to format params based on whether predicate "matchPatter" or "is"
+    this.lastAttribute = theAttrib;
+    this.lastMethodCalled = "theSortKey";
     return this;
   },
 
   matchPattern: function matchPattern (thePattern) {
     var theAppendString = "";
-    if (this.lastMethodCalled === "selectItemsWhere") { // then append to KeyConditionExpression
 
-      // if (this.parameter.KeyConditionExpression.length > 2) {  // it already has data, append the literal 'and'
-      //     theAppendString = " and";
-      // }
-      /* now append the pattern */
-      theAppendString = theAppendString + " " + thePattern;
+    theAppendString = theAppendString + " and " + thePattern;
 
-      if (thePattern === "begins_with" || thePattern === "contains") {
+    if (thePattern === "begins_with" || thePattern === "contains") {
           theAppendString = theAppendString + "(";
-      }
-      this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + theAppendString;
-      this.lastMatchPattern = thePattern;
-   }
-   this.lastPredicate = "matchesPattern";
+    }
+    
+    theAppendString = theAppendString + this.lastAttribute;
+    this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + theAppendString;
+    this.lastMatchPattern = thePattern;
+
+   this.lastPredicate = "matchPattern";
    return this;
   },
 
@@ -489,7 +476,7 @@ DbQuery.prototype = {
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
           var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.delete(params, function(err, data) {
+          docClient.query(params, function(err, data) {
              if (err) {
                reject(err);
              } else {
