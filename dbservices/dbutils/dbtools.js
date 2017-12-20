@@ -51,6 +51,11 @@ DbGetItem.prototype = {
     return promise;
   },
 
+  returnOnly:  function returnOnly (attributeList) {
+    this.parameter.ProjectionExpression = attributeList;
+    return this;
+  },
+
   hasResultSet: function (result) {return !(_.isEmpty(result)); },
 
   keyUsed:  function () {
@@ -86,14 +91,18 @@ DbPutItem.prototype = {
 
   mapValuestoAttribs: function (tableDef, attribValues) {
     var keys = Object.keys(attribValues);
+
+    var tabledefKeys = Object.keys(tableDef.Item); // get number of attributes on table
+
+    if (tabledefKeys.length !== keys.length) {
+      // throw exception, if attributes on table do match number of put values,
+      throw Error("Schema Error; put values do not match number of attributes on schema definition");
+    }
+
     /* for all the values passed in with valueObject, update the table defintion */
     /* with these values. */
     for (var i = 0; i < keys.length; i++) {
-        // if (i === 0 || i ===1 ) { /* log primary and sort key used */
-        //    console.log(`This is key ${i} used "${keys[i]}" => This is value "${attribValues[keys[i]]}""`);
-        // }
         var keytype = Object.keys(tableDef.Item[[keys[i]]]);
-        // td.Item[[keys[i]]][keytype] = valueObject[keys[i]]; /* used with type (eg. S:) was in schema */
         tableDef.Item[[keys[i]]] = attribValues[keys[i]];
     }
   },
@@ -107,7 +116,6 @@ DbPutItem.prototype = {
   setNotExistConditionOn: function setNotExistConditionOn (primarykeyname) {
     this.tableDef.ConditionExpression = "attribute_not_exists(" + primarykeyname + ")";
   },
-
 
   executeDbRequest: function (params) {
      var promise = new Promise(
@@ -161,7 +169,6 @@ DbUpdateItem.prototype = {
   },
 
   updateAttrib: function updateAttrib (attribName) {
-    console.log("Length of UpdExpression is " + this.parameter.UpdateExpression.length);
     var comma = ",";  // add comma only if adding second assignment. Not needed on initial assignment
     if (this.parameter.UpdateExpression.length === 4) {   // No comma needed, as just has the string "set "
       this.parameter.UpdateExpression = this.parameter.UpdateExpression + " " + attribName + " = ";
@@ -188,6 +195,26 @@ DbUpdateItem.prototype = {
   //  this.parameter.UpdateExpression = "SET " + theAttrib + " = " + theAttrib " + "  + ":incr";
    this.parameter.UpdateExpression = `SET ${theAttrib} =  ${theAttrib} + :incr`;
    return this;
+  },
+
+  onlyIf: function onlyIf (theAttrib) {
+  //  this.parameter.UpdateExpression = "SET " + theAttrib + " = " + theAttrib " + "  + ":incr";
+   this.parameter.ConditionExpression = theAttrib;
+   return this;
+  },
+
+  is: function is (operator) {
+  //  this.parameter.UpdateExpression = "SET " + theAttrib + " = " + theAttrib " + "  + ":incr";
+   this.parameter.ConditionExpression = `${this.parameter.ConditionExpression} ${operator}`;
+   return this;
+  },
+
+  theValue: function theValue (theVal) {
+    this.fieldcounter++;
+    var attribValRef = ":v" + this.fieldcounter;
+    this.parameter.ConditionExpression = `${this.parameter.ConditionExpression} ${attribValRef}`;
+    this.parameter.ExpressionAttributeValues[attribValRef] = theVal;
+    return this;
   },
 
   hasResultSet: function (result) {return !(_.isEmpty(result)); },
@@ -232,8 +259,7 @@ function DbDeleteItem ()  {
   this.parameter.TableName = undefined;
   this.parameter.Key = {};
   this.parameter.ConditionExpression = "";
-  this.parameter.ExpressionAttributeValues = {};
-  this.parameter.ReturnValues = "ALL_OLD";
+  // this.parameter.ExpressionAttributeValues = {};
   this.fieldcounter = 0;
   // this.theConditionalAttrib = undefined;
 };
@@ -257,7 +283,13 @@ DbDeleteItem.prototype = {
       return this;
   },
 
-  deleteItemWhere: function deleteItemWhere (theConditionalAttrib) {
+  whereAttribute: function whereAttribute (theConditionalAttrib) {
+    // initialize Expression Attributes only if undefined; this avoids intializing
+    // everytime whereAttribute is called
+    if (this.parameter.ExpressionAttributeValues === undefined) {
+      this.parameter.ExpressionAttributeValues = {};
+    }
+    // build condition expression
     this.parameter.ConditionExpression = theConditionalAttrib;
     return this;
   },
@@ -272,6 +304,22 @@ DbDeleteItem.prototype = {
     this.parameter.ConditionExpression = this.parameter.ConditionExpression +
                    " :v" + this.fieldcounter;
     this.parameter.ExpressionAttributeValues[":v" + this.fieldcounter] = theValue;
+    return this;
+  },
+
+  whereAttributeNotExist: function whereAttributeNotExist (theAttrib) {
+    var andWord = "";
+    if (this.parameter.ConditionExpression.length > 2){
+      andWord = "and";
+    }
+    this.parameter.ConditionExpression = `${this.parameter.ConditionExpression} ${andWord} attribute_not_exists(${theAttrib})`;
+    return this;
+  },
+
+  returnOldValues: function returnOldValues (wantOldValues) {
+    if (wantOldValues) {
+      this.parameter.ReturnValues = "ALL_OLD";
+    }
     return this;
   },
 
@@ -449,7 +497,7 @@ DbQuery.prototype = {
     if (thePattern === "begins_with" || thePattern === "contains") {
           theAppendString = theAppendString + "(";
     }
-    
+
     theAppendString = theAppendString + this.lastAttribute;
     this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + theAppendString;
     this.lastMatchPattern = thePattern;
@@ -466,6 +514,11 @@ DbQuery.prototype = {
 
   deleteItemWhere: function deleteItemWhere (theConditionalAttrib) {
     this.parameter.ConditionExpression = theConditionalAttrib;
+    return this;
+  },
+
+  returnOnly:  function returnOnly (attributeList) {
+    this.parameter.ProjectionExpression = attributeList;
     return this;
   },
 

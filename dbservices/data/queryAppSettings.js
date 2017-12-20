@@ -8,13 +8,14 @@ const thisFilename = dpbutils.pluckFilename(__filename, __dirname);
 dpbutils.loginfo(`'${thisFilename}' Started`);
 
 db_query = new dbtools.DbQuery()
-    .setTableName("AppSettings")
+  .setTableName("AppSettings")
     // .setPrimaryKey("userid", "db00550")   // This setS KeyCondition Expression and
                                            // and Expression Attribute Values
-    .selectItemsWherePrimaryKey("userid").is("=").theValue("db00001")
-    .theSortKey("appcode").is("=").theValue("hmc");
+  .selectItemsWherePrimaryKey("userid").is("=").theValue("db00021")
+  // .theSortKey("appcode").is("=").theValue("hmc")
     // .theSortKey("SongTitle").matchPattern("begins_with").theValue("Today")
     // .where("price").is("<").theValue("1.00");   // Filter Criteria
+  .returnOnly("locationReminders");
 
 // console.log(JSON.stringify(db_query.dbParms(),null, 2));
 

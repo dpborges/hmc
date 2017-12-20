@@ -10,10 +10,11 @@ dpbutils.loginfo(`'${thisFilename}' Started`);
 // Set up parameters to get an item
 db_deleter = new dbtools.DbDeleteItem()
     .setTableName("AppSettings")
-    .setPrimaryKey("userid", "db00008")
+    .setPrimaryKey("userid", "db0002")
     .setSortKey("appcode","hmc")
-    // .incrementValueBy(1).forAttribute("lastChecklistId");
-    .deleteItemWhere("lastChecklistId").is("=").toValue(100)
+    .whereAttribute("lastChecklistId").is("=").toValue(2)
+    .whereAttributeNotExist("record_label")
+    .returnOldValues(false);
 
  console.log(JSON.stringify(db_deleter.dbParms(), null, 2));
 

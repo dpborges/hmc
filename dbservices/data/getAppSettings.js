@@ -11,7 +11,8 @@ dpbutils.loginfo(`'${thisFilename}' Started`);
 db_getter = new dbtools.DbGetItem()
     .setTableName("AppSettings")
     .setPrimaryKey("userid", "db00001")
-    .setSortKey("appcode","hmc");
+    .setSortKey("appcode","hmc")
+    .returnOnly("userid, appcode, lastChecklistId, locationReminders");
 
 // Execute database call
 db_getter.executeDbRequest(db_getter.dbParms()).then(function(data) {
@@ -28,5 +29,5 @@ db_getter.executeDbRequest(db_getter.dbParms()).then(function(data) {
 
 }).catch(function(err) {
     // Call errorhandler with err object, the filname, the operationName, and Parms
-    dpbutils.errorHandler(err, thisFilename, "PutItem", db_getter.dbParms());
+    dpbutils.errorHandler(err, thisFilename, "GetItem", db_getter.dbParms());
 })

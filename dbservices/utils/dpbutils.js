@@ -41,6 +41,7 @@ const errorHandler = function errorHandler (err, filename, operationName, parmUs
   if (errname === "ValidationException" || errname === "ResourceNotFoundException" ||
         errname === "ConditionalCheckFailedException" || errcode === "ConditionalCheckFailedException")
   {
+    if (errname === "ValidationException") {errmsg = "Item may not be Database, condition not met, or parm malformed";}
     var errMsg = operationName + " Failed due to " + errname + ": " + errmsg; //construct msg
     logerror(`'${filename}' ${errMsg}`);   // log error message
   } else  {      // not one of the Exceptions I'm checking, hence log stack trace

@@ -14,10 +14,11 @@ dpbutils.loginfo(`'${thisFilename}' Started`);
 
 /* provide values you would like to insert into table  */
 var putValues = {
-  userid:   "db00551|hmc",
+  userid:   "db00021",
   appcode:  "hmc",
   lastChecklistId: 12,
   locationReminders: true
+  // checklistname: "this id checklist #1"
 };
 
 /* Pass in table name and the putValues to DbPutItem constructor */
