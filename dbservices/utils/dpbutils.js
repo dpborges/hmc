@@ -1,6 +1,8 @@
 const winston  = require('winston');
-const moment   = require("moment");
 var   _        = require("lodash");
+const moment   = require("moment");
+require("moment-timezone");
+
 
 const loginfo_enabled = true;
 
@@ -52,10 +54,25 @@ const errorHandler = function errorHandler (err, filename, operationName, parmUs
   logerror(`'${filename}' >>>>>>> End of Error text <<<<<<<`);
 }
 
+
+/* ********************************************************************* */
+/* Date related functions                                             */
+/* ********************************************************************* */
+
+function currentDateTimestamp(dateString) {
+  // return moment.utc().utcOffset(-05:00);
+  if (dateString) {
+    return moment(dateString).format('YYYY-MM-DDTHH:mm:ss.SSS');
+  }
+  return moment().format('YYYY-MM-DDTHH:mm:ss.SSS'); //.utcOffset('-05:00').format();
+}
+
+
 module.exports = {
   pluckFilename,
   loginfo,
   logerror,
   loginfo_enabled,
-  errorHandler
+  errorHandler,
+  currentDateTimestamp
 }

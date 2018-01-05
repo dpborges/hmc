@@ -8,7 +8,8 @@ AWS.config.update({
 var dynamodb = new AWS.DynamoDB();
 
 var params = {
-    TableName : "AppSettings",
+    // TableName : "HMChecklist"
+    TableName : "AppSettings"
 };
 
 dynamodb.deleteTable(params, function(err, data) {

@@ -1,0 +1,5 @@
+node_modules/
+dbservices/:*Old*.js
+data_files/**
+__tests__/**
+playground/**

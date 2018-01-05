@@ -13,16 +13,25 @@ var tabledef =
         Item: {
           "userid":               "",
           "appcode":              "",
-          "lastChecklistId":      0,
-          "locationReminders":    false
+          "appname":              "",
+          "assetid":              "",
+          "backgroundImage":      "",
+          "defaultLoginScreen":   "",
+          "maxchecklists":        "",
+          "locationReminders":    false,
+          "createDate":           "",
+          "updDate":              ""
         }
     },
-    table2: {
-        TableName:              "table2",
+    HMChecklist: {
+        TableName:              "HMChecklist",
         Item: {
-          "userid":               { S: "userid_value" },
-          "field1":               { S: "app_code_value" },
-          "field2":               { S: "app_code_value" }
+          "assetid":              "",
+          "userid":               "",
+          "chklistname":          "",
+          "appcode":              "",
+          "datadomain":           "",
+          "chklistnameplus":      "",
         }
     }
 }; /* end of tabledef */

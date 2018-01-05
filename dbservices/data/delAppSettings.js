@@ -8,13 +8,13 @@ const thisFilename = dpbutils.pluckFilename(__filename, __dirname);
 dpbutils.loginfo(`'${thisFilename}' Started`);
 
 // Set up parameters to get an item
-db_deleter = new dbtools.DbDeleteItem()
+var db_deleter = new dbtools.DbDeleteItem()
     .setTableName("AppSettings")
-    .setPrimaryKey("userid", "db0002")
+    .setPrimaryKey("userid", "db00004")
     .setSortKey("appcode","hmc")
-    .whereAttribute("lastChecklistId").is("=").toValue(2)
-    .whereAttributeNotExist("record_label")
-    .returnOldValues(false);
+    .whereAttribute("maxchecklists").is("=").toValue(3);
+    // .whereAttributeNotExist("record_label")
+    // .returnOldValues(false);
 
  console.log(JSON.stringify(db_deleter.dbParms(), null, 2));
 
@@ -30,7 +30,7 @@ db_deleter.executeDbRequest(db_deleter.dbParms()).then(function(data) {
     dpbutils.loginfo(`'${thisFilename}' Ended`);
 
 }).catch(function(err) {
-    // Call errorhandler with err object, the filname, the operationName, and Parms
+    // Call errorhandler with err object, the filename, the operationName, and Parms
     if (err.code === "ConditionalCheckFailedException") {
       /* write code here if record does not exist */
       console.log("######################### Item(s) does not exist - check your ConditionExpression");

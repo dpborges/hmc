@@ -8,20 +8,18 @@ AWS.config.update({
 var dynamodb = new AWS.DynamoDB();
 
 var params = {
-    TableName : "AppSettings",
+    TableName : "HMChecklist",
     KeySchema: [
-        { AttributeName: "userid", KeyType: "HASH"},  //Partition key
-        { AttributeName: "appcode", KeyType: "RANGE" }  //Sort key
+        { AttributeName: "assetid", KeyType: "HASH"}  //Partition key
+        // { AttributeName: "appcode", KeyType: "RANGE" }  //Sort key
     ],
     AttributeDefinitions: [
-        { AttributeName: "userid", AttributeType: "S" },
-        { AttributeName: "appcode", AttributeType: "S" }
-        // { AttributeName: "last_checklist_id", AttributeType: "N" },
-        // { AttributeName: "location_reminders", AttributeType: "N" }
+        { AttributeName: "assetid", AttributeType: "S" }
+        // { AttributeName: "appcode", AttributeType: "S" }
     ],
     ProvisionedThroughput: {
-        ReadCapacityUnits: 30,
-        WriteCapacityUnits: 30
+        ReadCapacityUnits: 300,
+        WriteCapacityUnits: 300
     }
 };
 

@@ -12,9 +12,9 @@ dpbutils.loginfo(`'${thisFilename}' Started`);
 /* Set up: provide put values and condition to do a put only PK does not exist
 /* ========================================================================== */
 
-/* provide values you would like to insert into table  */
+/* provide default values you would like to insert into table  */
 var putValues = {
-  userid:   "db00021",
+  userid:   "db00022",
   appcode:  "hmc",
   lastChecklistId: 12,
   locationReminders: true
@@ -25,7 +25,7 @@ var putValues = {
 var db_puter  = new dbtools.DbPutItem("AppSettings", putValues);
 
 db_puter.setNotExistConditionOn("userid");   // set condition such you execute put only
-                                            //     if userid does not exist in table
+                                            //     if userid/appcode does not exist in table
 
 /* ========================================================================== */
 /* Execute PutItem command

@@ -1,0 +1,23 @@
+{
+  "name": "hmc",
+  "version": "1.0.0",
+  "description": "home maintenance checklist",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest",
+    "test-watch": "nodemon --exec 'npm jest'"
+  },
+  "author": "dpbsw",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.157.0",
+    "lodash": "^4.17.4",
+    "moment": "^2.19.3",
+    "moment-timezone": "^0.5.14",
+    "uuid": "^3.1.0",
+    "winston": "^2.4.0"
+  },
+  "devDependencies": {
+    "jest": "^22.0.0"
+  }
+}

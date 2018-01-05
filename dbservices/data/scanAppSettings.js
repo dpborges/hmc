@@ -9,7 +9,7 @@ var docClient = new AWS.DynamoDB.DocumentClient();
 
 var params = {
     TableName: "AppSettings",
-    ProjectionExpression: "userid, appcode, lastChecklistId, locationReminders"
+    ProjectionExpression: "userid, appcode, appname, assetid,  backgroundImage, defaultLoginScreen, maxchecklists, locationReminders, createDate, updDate",
     // ProjectionExpression: "userid, app_code, last_checklist_id, location_reminders",
     /* ProjectionExpression: "#yr, title, info.rating",
     FilterExpression: "#yr between :start_yr and :end_yr",
@@ -23,7 +23,7 @@ var params = {
     */
 };
 
-console.log("Scanning app-settings table.");
+console.log("Scanning AppSettings table.");
 docClient.scan(params, onScan);
 
 function onScan(err, data) {
@@ -32,12 +32,19 @@ function onScan(err, data) {
     } else {
         // print all the movies
         console.log("Scan succeeded.");
+        console.log("=============================================");
         data.Items.forEach(function(as) {
            console.log(
                 "userid: " + as.userid + " ",
-                "appcode: " + as.appcode + "\n",
-                "lastChecklistId: " + as.lastChecklistId  + " " +
-                "locationReminders: " +  as.locationReminders + "\n");
+                "appcode: " + as.appcode + " ",
+                "appname: " + as.appname + " ",
+                "assetid: " + as.assetid + "\n",
+                "backgroundImage: " + as.backgroundImage + " ",
+                "defaultLoginScreen: " + as.defaultLoginScreen  + " ",
+                "locationReminders: " +  as.locationReminders + "\n",
+                "createDate: " + as.createDate + " ",
+                "updDate: " + as.updDate + " ");
+          console.log("=============================================");
         });
 
         // continue scanning if we have more movies, because

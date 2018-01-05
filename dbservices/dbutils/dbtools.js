@@ -1,6 +1,10 @@
 var awsconfig = require("./aws");
 var _         = require("lodash");
+const uuidv1 = require('uuid/v1');
+const uuidv4 = require('uuid/v4');
+
 var schema    = require("./../dbutils/schema");
+
 
 AWS = awsconfig.AWS;
 
@@ -34,12 +38,13 @@ DbGetItem.prototype = {
       return this;
   },
 
-  executeDbRequest: function (params) {
+  executeDbRequest: function () {
+     var self = this;
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
           var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.get(params, function(err, data) {
+          docClient.get(self.parameter, function(err, data) {
              if (err) {
                reject(err);
              } else {
@@ -76,10 +81,18 @@ DbGetItem.prototype = {
 /* DbPutitem helper functions                                               */
 /* ************************************************************************ */
 function DbPutItem (tablename, attribValues)  {
-  this.tablename = tablename;
-  this.attribValues = attribValues;
-  this.tableDef  = DbPutItem.prototype.getTableDef(this.tablename)
-  DbPutItem.prototype.mapValuestoAttribs(this.tableDef, this.attribValues);
+  this.parameter = {};
+  this.parameter.TableName = tablename;
+  this.parameter.Item = attribValues;
+    // this.tableDef  = DbPutItem.prototype.getTableDef(this.tablename);
+  // if (attribValues) {
+  //   DbPutItem.prototype.mapValuestoAttribs(this.tableDef, this.attribValues);
+  // }
+
+  // console.log('Tabledef, after mapping');
+  // console.log(this.tableDef);
+
+  // console.log(this.tableDef);
 };
 
 DbPutItem.prototype = {
@@ -107,9 +120,10 @@ DbPutItem.prototype = {
     }
   },
 
-  dbParms:  function () {
+  dbParms:  function dbParms () {
     // return JSON.stringify(this.parameter, null, 2);
-    return this.tableDef;
+    //  return this.tableDef;
+    return this.parameter;
   },
 
   /* Sets condition, such that if primary key exist, Put will not be executed */
@@ -124,7 +138,8 @@ DbPutItem.prototype = {
           var docClient = new AWS.DynamoDB.DocumentClient();
           docClient.put(params, function(err, data) {
              if (err) {
-               reject(err.name);
+               reject(err);
+               //  reject(err.name); COMMENTED THIS OUT ON 12/22 IF GET UNEXPECTED OUTPUT, REVERT BACK TO THIS CODE
              } else {
                resolve(data);
              }
@@ -132,6 +147,11 @@ DbPutItem.prototype = {
         } /* end of resolver */
     );
     return promise;
+  },
+
+  toString: function toString () {
+    return JSON.stringify(this.parameter, null, 2);
+
   }
 
 } /* end of DbPutItem.prototype */
@@ -258,7 +278,7 @@ function DbDeleteItem ()  {
   this.parameter = {};
   this.parameter.TableName = undefined;
   this.parameter.Key = {};
-  this.parameter.ConditionExpression = "";
+  // this.parameter.ConditionExpression = "";
   // this.parameter.ExpressionAttributeValues = {};
   this.fieldcounter = 0;
   // this.theConditionalAttrib = undefined;
@@ -284,6 +304,9 @@ DbDeleteItem.prototype = {
   },
 
   whereAttribute: function whereAttribute (theConditionalAttrib) {
+    // Add the ConditionExpression Property
+    this.parameter.ConditionExpression = ""
+
     // initialize Expression Attributes only if undefined; this avoids intializing
     // everytime whereAttribute is called
     if (this.parameter.ExpressionAttributeValues === undefined) {
@@ -364,6 +387,7 @@ DbDeleteItem.prototype = {
 function DbQuery ()  {
   this.parameter = {};
   this.parameter.TableName = undefined;
+  this.parameter.IndexName = "";
   this.parameter.KeyConditionExpression = "";
   // this.parameter.FilterExpression = "";  ADD THIS ONLY WITH FILTER METHOD
   this.parameter.ExpressionAttributeValues = {};
@@ -386,7 +410,27 @@ DbQuery.prototype = {
     return this;
   },
 
+  // ConsistentRead defaults to false
+  setIndexName: function setIndexName (index) {
+    this.parameter.IndexName = index;
+    this.parameter.ConsistentRead = false;  // this is default by set explicitly here
+    return this;
+  },
+
+  // allows you to change default of false, for consistent read, to true if desired.
+  setConsistentRead: function setConsistentRead (consistent) {
+    this.parameter.ConsistentRead = consistent;
+    return this;
+  },
+
+
   selectItemsWherePrimaryKey: function selectItemsWherePrimaryKey (attribName) {
+    // If IndexName is not set upon calling this function, then delete IndexName Property.
+    // This request is quering table directly.
+    if (this.parameter.IndexName === "") {
+      delete this.parameter.IndexName;
+    }
+
     // Save lastAttribute and lastMethodCalled so subsequent predicate function
     // knows how to format params based on whether predicate "matchPatter" or "is"
     this.lastAttribute = attribName;
@@ -556,10 +600,132 @@ DbQuery.prototype = {
   }
 }
 
+/* ************************************************************************ */
+/* Batch Delete helper function                                             */
+/* ************************************************************************ */
+
+function DbBatchDelete ()  {
+  this.parameter = {};
+  this.parameter.RequestItems = {};
+};
+
+DbBatchDelete.prototype = {
+
+  setTableName: function setTableName(table) {
+    this.parameter.RequestItems[table] = [];  // init array to hold delete requests
+    this.tableName = table;
+    return this;
+  },
+
+  setDeleteKeys: function setDeleteKeys(deleteKeys) {
+    deleteKeys.forEach((deleteKey, ix) => {
+        this.parameter.RequestItems[this.tableName][ix] = {};
+        this.parameter.RequestItems[this.tableName][ix]["DeleteRequest"] = {};
+        this.parameter.RequestItems[this.tableName][ix]["DeleteRequest"]["Key"] = {};
+        this.parameter.RequestItems[this.tableName][ix]["DeleteRequest"]["Key"][deleteKey.pkname] = deleteKey.pkvalue;
+        // If user not passing sort key, means table only has primary key, hence don't attemp to add sort key
+        if (deleteKey.skname) {
+          this.parameter.RequestItems[this.tableName][ix]["DeleteRequest"]["Key"][deleteKey.skname] = deleteKey.skvalue;
+        }
+    }); //end forEach
+    return this;
+  },  // end of setDeleteKeys
+
+  dbParms:  function () {
+    // return JSON.stringify(this.parameter, null, 2);
+    return this.parameter;
+  },
+
+ executeDbRequest: function executeDbRequest() {
+   var self = this;
+   // Provide array of primary key and sort key values to delete in params
+    var promise = new Promise(
+         function resolver(resolve, reject) {
+           var docClient = new AWS.DynamoDB.DocumentClient();
+           docClient.batchWrite(self.parameter, function(err, data) {
+               if (err) {
+                 reject(err);
+               } else {
+                 resolve(data);
+               }
+           }); /* end of docClient.get */
+         } /* end of resolver */
+     );
+     return promise;
+ } // end executeDbRequest
+} // end prototype
+
+/* ************************************************************************ */
+/* Batch Delete helper function                                             */
+/* ************************************************************************ */
+function DbBatchPut ()  {
+  this.parameter = {};
+  this.parameter.RequestItems = {};
+};
+
+DbBatchPut.prototype = {
+
+  setTableName: function setTableName(table) {
+    this.parameter.RequestItems[table] = [];  // init array to hold delete requests
+    this.tableName = table;
+    return this;
+  },
+
+  setPutItems: function setPutItems(putItems) {
+    putItems.forEach((putItem, ix) => {
+      this.parameter.RequestItems[this.tableName][ix] = {};
+      this.parameter.RequestItems[this.tableName][ix]["PutRequest"] = {};
+      this.parameter.RequestItems[this.tableName][ix]["PutRequest"]["Item"] = {};
+      this.parameter.RequestItems[this.tableName][ix]["PutRequest"]["Item"] = putItem;
+    }); //end forEach
+    return this;
+  },  // end of setDeleteKeys
+
+  dbParms:  function () {
+    // return JSON.stringify(this.parameter, null, 2);
+    return this.parameter;
+  },
+
+ executeDbRequest: function executeDbRequest() {
+   var self = this;
+   // Provide array of primary key and sort key values to delete in params
+    var promise = new Promise(
+         function resolver(resolve, reject) {
+           var docClient = new AWS.DynamoDB.DocumentClient();
+           docClient.batchWrite(self.parameter, function(err, data) {
+               if (err) {
+                 reject(err);
+               } else {
+                 resolve(data);
+               }
+           }); /* end of docClient.get */
+         } /* end of resolver */
+     );
+     return promise;
+ } // end executeDbRequest
+} // end prototype
+
+
+
+/* ************************************************************************ */
+/* UUID functions; One used for assetid and one used for transaction Id     */
+/* ************************************************************************ */
+function getNewAssetId() {
+  return uuidv1();
+}
+
+function getNewTransactionId() {
+  return uuidv4();
+}
+
 module.exports = {
   DbGetItem,
   DbPutItem,
   DbUpdateItem,
   DbDeleteItem,
-  DbQuery
+  DbQuery,
+  DbBatchDelete,
+  DbBatchPut,
+  getNewAssetId,
+  getNewTransactionId
 }

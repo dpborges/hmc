@@ -12,7 +12,7 @@ db_getter = new dbtools.DbGetItem()
     .setTableName("AppSettings")
     .setPrimaryKey("userid", "db00001")
     .setSortKey("appcode","hmc")
-    .returnOnly("userid, appcode, lastChecklistId, locationReminders");
+    .returnOnly("userid, appcode, lastChecklistId, locationReminders"); // projection expression
 
 // Execute database call
 db_getter.executeDbRequest(db_getter.dbParms()).then(function(data) {

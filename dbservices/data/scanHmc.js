@@ -23,7 +23,7 @@ var params = {
     */
 };
 
-console.log("Scanning app-settings table.");
+console.log("Scanning HMChecklist table.");
 docClient.scan(params, onScan);
 
 function onScan(err, data) {
