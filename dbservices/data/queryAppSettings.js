@@ -14,8 +14,8 @@ db_query = new dbtools.DbQuery()
   .selectItemsWherePrimaryKey("userid").is("=").theValue("db00002")
   .theSortKey("appcode").is("=").theValue("hmc")
     // .theSortKey("SongTitle").matchPattern("begins_with").theValue("Today")
-  // .where("price").is("<").theValue("1.00");   // Filter Criteria
-   .returnOnly("userid, appcode, defaultLoginScreen, backgroundImage, maxchecklists, locationReminders");   // projection expression; list of attributes
+  //  .where("price").is("<").theValue("1.00");   // Filter Criteria
+  .returnOnly("userid, appcode, defaultLoginScreen, backgroundImage, maxchecklists, locationReminders");   // projection expression; list of attributes
 
 console.log(JSON.stringify(db_query.dbParms(),null, 2));
 
@@ -32,7 +32,6 @@ db_query.executeDbRequest(db_query.dbParms()).then(function(data) {
     }
     //  Log DB request has Ended
     dpbutils.loginfo(`'${thisFilename}' Ended`);
-
 }).catch(function(err) {
     // Call errorhandler with err object, this filname, the operationName, and Parms
     dpbutils.errorHandler(err, thisFilename, "Query", db_query.dbParms());

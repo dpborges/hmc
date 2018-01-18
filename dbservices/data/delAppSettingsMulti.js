@@ -10,13 +10,10 @@ dpbutils.loginfo(`'${thisFilename}' Started`);
 console.log(">>>>>>>>> AFTERALL STARTED");
 //  delete test items
 var testItems = [
-    {"userid":"db00007", "appcode":"hmc"},
-    {"userid":"db00009", "appcode":"hmc"},
-    {"userid":"db00010", "appcode":"hmc"},
-    {"userid":"db00013", "appcode":"hmc"},
-    {"userid":"db00014", "appcode":"hmc"},
-    {"userid":"db00015", "appcode":"hmc"},
-    {"userid":"db00016", "appcode":"hmc"}
+    {"userid":"db00001", "appcode":"hmc"},
+    {"userid":"db00002", "appcode":"hmc"},
+    {"userid":"db00003", "appcode":"hmc"},
+    {"userid":"db00004", "appcode":"hmc"}
 ];
 
 var deleteObjects = [];

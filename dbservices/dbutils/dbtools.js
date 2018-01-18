@@ -84,15 +84,6 @@ function DbPutItem (tablename, attribValues)  {
   this.parameter = {};
   this.parameter.TableName = tablename;
   this.parameter.Item = attribValues;
-    // this.tableDef  = DbPutItem.prototype.getTableDef(this.tablename);
-  // if (attribValues) {
-  //   DbPutItem.prototype.mapValuestoAttribs(this.tableDef, this.attribValues);
-  // }
-
-  // console.log('Tabledef, after mapping');
-  // console.log(this.tableDef);
-
-  // console.log(this.tableDef);
 };
 
 DbPutItem.prototype = {
@@ -128,15 +119,16 @@ DbPutItem.prototype = {
 
   /* Sets condition, such that if primary key exist, Put will not be executed */
   setNotExistConditionOn: function setNotExistConditionOn (primarykeyname) {
-    this.tableDef.ConditionExpression = "attribute_not_exists(" + primarykeyname + ")";
+    this.parameter.ConditionExpression = "attribute_not_exists(" + primarykeyname + ")";
   },
 
-  executeDbRequest: function (params) {
+  executeDbRequest: function () {
+    var self = this;
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
           var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.put(params, function(err, data) {
+          docClient.put(self.parameter, function(err, data) {
              if (err) {
                reject(err);
                //  reject(err.name); COMMENTED THIS OUT ON 12/22 IF GET UNEXPECTED OUTPUT, REVERT BACK TO THIS CODE
@@ -239,12 +231,13 @@ DbUpdateItem.prototype = {
 
   hasResultSet: function (result) {return !(_.isEmpty(result)); },
 
-  executeDbRequest: function (params) {
+  executeDbRequest: function () {
+     var self = this;
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
           var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.update(params, function(err, data) {
+          docClient.update(self.parameter, function(err, data) {
              if (err) {
                reject(err);
              } else {
@@ -490,20 +483,6 @@ DbQuery.prototype = {
     return this;
   },
 
-  // theValue: function theValue (value) {
-  //   var theAppendString = "";
-  //   console.log('LAST PATTERN ', this.lastMatchPattern);
-  //   console.log('LAST ATTRIB ', this.lastAttribute);
-  //   if (this.lastMethodCalled === "selectItemsWherePrimaryKey") {
-  //     theAppendString = theAppendString + this.lastAttribute + ",";
-  //
-  //     if (this.lastMatchPattern === "begins_with") {
-  //        theAppendString = theAppendString + " " + value;
-  //     }
-  //     this.parameter.KeyConditionExpression = this.parameter.KeyConditionExpression + theAppendString;
-  //   }
-  // },
-
   where: function where (theAttrib) {
     this.parameter.FilterExpression = theAttrib;
     this.lastMethodCalled = "where";
@@ -568,12 +547,13 @@ DbQuery.prototype = {
 
   hasResultSet: function (result) {return !(_.isEmpty(result)); },
 
-  executeDbRequest: function (params) {
+  executeDbRequest: function () {
+     var self = this;
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
           var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.query(params, function(err, data) {
+          docClient.query(self.parameter, function(err, data) {
              if (err) {
                reject(err);
              } else {
