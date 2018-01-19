@@ -19,15 +19,17 @@ dpbutils.loginfo(`'${thisFilename}' Started`);
 /* ========================================================================== */
 /* Checklist base class
 /* ========================================================================== */
-function Checklist () {
+function Checklist (user_id) {
   this.assetid =  "";
   this.appcode  = ChecklistConfig.appcode;
   this.datadomain   = ChecklistConfig.datadomain;
   this.category = ChecklistConfig.category;
-  this.clname    = "";  // can have a qualifier followed by a |
+  this.chklistname    = "";
+  this.nameQualifier  = ""   // gets concatenated to chklistname with a pipe
+  this.chklist_ext    = {};  // Other checklist attributes (eg. region, dept, etc)
   this.userCategories = [];
-  this.userid  = "";
-  this.status  = "not started";
+  this.userid  = user_id;
+  this.clstatus  = "not started";
   this.hide_dones = "false";
   this.metrics = {
       totalTasks: 0,
@@ -42,15 +44,15 @@ function Checklist () {
   this.updDate            = "";
   this.clipboard   = {};
 
-  this.addCategory("");
+  this.addCategory("_root_");
 
 };
 
 Checklist.prototype = {
 
-    getAssetid: function getAssetid () { return this.assetid;},
-    getAppcode: function getAppcode () { return this.appcode;},
-    getDatadomain: function getDatadomain () { return this.datadomain;},
+    // getAssetid: function getAssetid () { return this.assetid;},
+    // getAppcode: function getAppcode () { return this.appcode;},
+    // getDatadomain: function getDatadomain () { return this.datadomain;},
 
     setUser: function setUser (uid) {this.userid = uid},
     getUser: function getUser ()    {return this.userid;},
@@ -58,8 +60,11 @@ Checklist.prototype = {
     setChklistname: function setChklistnameName (clname) {this.chklistname = clname; return this;},
     getChklistname: function getChklistnameName () {return this.chklistname;},
 
-    setChklistnamePart2: function setChklistnameNamePart2 (clnamep2) {this.chklistname_part2 = clnamep2;},
-    getChklistnamePart2: function getChklistnameNamePart2 () {return this.chklistname_part2;},
+    setNameQualifier: function setNameQualifier (q) {this.nameQualifier = q; return this;},
+    getNameQualifier: function getNameQualifier () { return this.nameQualifier;},
+
+    // setChklistnamePart2: function setChklistnameNamePart2 (clnamep2) {this.chklistname_part2 = clnamep2;},
+    // getChklistnamePart2: function getChklistnameNamePart2 () {return this.chklistname_part2;},
 
     getTotalTasks: function getTotalTasks() { console.log("Calculated at run-time for dashboard") },
     getNumTasksOverdue: function getTasksOverdue() { console.log("Calculated at run-time for dashboard") },
@@ -70,18 +75,20 @@ Checklist.prototype = {
     getNumCategories: function getNumCategories() { console.log("Calculated at run-time for dashboard"); },
     getTasksIgnored: function getTasksIgnored(tasksignored) { console.log("Calculated at run-time for dashboard") },
 
-    createNewChklist: function createNewChklist (userid) {
+    insertNew: function insertNew () {
       /* provide values you would like to insert into table  */
       var putValues = {
         assetid:         dbtools.getNewAssetId(),
         userid:          this.userid,
-        chklistname:     this.chklistname,
+        chklistname:     this.chklistname + "|" +  this.nameQualifier,  // concat
+        clstatus:        this.clstatus,
+        chklist_ext:     this.chklist_ext,
+        userCategories:  this.userCategories,
         appcode:         this.appcode,
         datadomain:      this.datadomain,
-        chklistnameplus: this.chklistname_part2,
         category:        this.category,
-        hideCompleted:   this.hideCompleted,
-        status:          this.status,
+        hide_dones:      this.hide_dones,
+
         // totalTasks:     this.totalTasks,
         // numTasksDone:   this.numTasksDone,
         // numTasksIgnored: this.numTasksIgnored,
@@ -91,9 +98,9 @@ Checklist.prototype = {
       };
 
       /* Pass in table name and the putValues to DbPutItem constructor */
-      var db_puter  = new dbtools.DbPutItem("HMChecklist", putValues);
+      var db_puter  = new dbtools.DbPutItem("HomeMaintChecklist", putValues);
 
-      db_puter.setNotExistConditionOn(this.assetid);   // set condition such that you execute put only
+      db_puter.setNotExistConditionOn("userid");   // set condition such that you execute put only
                                                   //     if attribute here does not exist in table
 
       /* ========================================================================== */
@@ -367,8 +374,8 @@ Checklist.prototype = {
 
 // hmc = new Checklist();
 // hmc.setUser("db00004");
-// hmc.setChklistname("Home Maintenance Checklist")
-//    .setChklistnamePart2("Primary Residence");
+// hmc.set("Home Maintenance Checklist")
+//    .setclnamePart2("Primary Residence");
 // console.log(hmc);
 // hmc.saveChklist();
 
