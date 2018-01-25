@@ -6,6 +6,7 @@ require("moment-timezone");
 
 const loginfo_enabled = true;
 
+
 /* ********************************************************************* */
 /* Logging related functions                                             */
 /* ********************************************************************* */
@@ -67,6 +68,19 @@ function currentDateTimestamp(dateString) {
   return moment().format('YYYY-MM-DDTHH:mm:ss.SSS'); //.utcOffset('-05:00').format();
 }
 
+/* ********************************************************************* */
+/* Error Messages: takes an error message name and message extension       */
+/* ********************************************************************* */
+const getErrMsg = function getErrMsg(msgName, msgExt = "")  {
+    var errorTable = {
+        DuplicateRecord: "Duplicate Record Error: Record already exist for " + msgExt,
+        MissingParms:    "Missing Parms Error: Missing: " + msgExt,
+        DBCountError:    "DB Count Error: Expected " + msgExt,
+    }
+
+    return errorTable[msgName];
+}
+
 
 module.exports = {
   pluckFilename,
@@ -74,5 +88,6 @@ module.exports = {
   logerror,
   loginfo_enabled,
   errorHandler,
-  currentDateTimestamp
+  currentDateTimestamp,
+  getErrMsg
 }

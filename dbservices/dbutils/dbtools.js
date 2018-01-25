@@ -123,7 +123,7 @@ DbPutItem.prototype = {
   },
 
   executeDbRequest: function () {
-    var self = this;
+     var self = this;
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
@@ -142,8 +142,7 @@ DbPutItem.prototype = {
   },
 
   toString: function toString () {
-    return JSON.stringify(this.parameter, null, 2);
-
+      return JSON.stringify(this.parameter, null, 2);
   }
 
 } /* end of DbPutItem.prototype */
@@ -342,12 +341,13 @@ DbDeleteItem.prototype = {
 
   hasResultSet: function (result) {return !(_.isEmpty(result)); },
 
-  executeDbRequest: function (params) {
+  executeDbRequest: function () {
+     var self = this;
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
           var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.delete(params, function(err, data) {
+          docClient.delete(self.parameter, function(err, data) {
              if (err) {
                reject(err);
              } else {
