@@ -213,6 +213,12 @@ Checklist.prototype = {
        }
      },
 
+     saveCategoryUpdatesToDB: function saveCategoryUpdatesToDB() {
+
+
+
+     },
+
      // ========================================================================
      //  FUNCTIONS USED TO TRAVERSE THE USER CATEGORIES
      // ========================================================================
@@ -223,7 +229,6 @@ Checklist.prototype = {
        // process toplevel checklist tasks
        this.userCategories.forEach( (item) => {
         //  console.log(">> CATEGORY " + JSON.stringify(item.category, null,2 ));
-         console.log(`>> Category: ${item.category} | Path: ${item.path} `);
         //  console.log(">> CATEGORY " + JSON.stringify(item, null,2 ));
          // console.log("THIS IS AN tasklist " + JSON.stringify(item.tasklist, null,2 ));
          if (this.hasElements(item.tasklist)) {
@@ -353,14 +358,14 @@ Checklist.prototype = {
      //  CHECKLIST TABLE FUNCTIONS
      // ========================================================================
 
-     updCklsTableWithUserCat: function updChecklistTable(userCategoryObject) {
+     updCklsTableWithUserCat: function updCklsTableWithUserCat() {
 
        db_updater = new dbtools.DbUpdateItem()
            .setTableName(BoConfig.cklsTable)
            .setPrimaryKey("userid", this.userid)
            .setSortKey("chklistname",this.chklistname)
             // .incrementValueBy(1).forAttribute("lastChecklistId")
-           .updateAttrib("userCategories").withValue(userCategoryObject);
+           .updateAttrib("userCategories").withValue(this.userCategories);
            // .updateAttrib("lastChecklistId").withValue(747)
            // .onlyIf("lastChecklistId").is("=").theValue(3); // condition expression
           // console.log("DBUPDATER DBPARMS ", JSON.stringify(db_updater.parameter, null, 2 ));
@@ -388,33 +393,63 @@ Checklist.prototype = {
          return db_puter.executeDbRequest();
     },
 
-
-     createNewChecklist: function createNewChecklist() {
-       var self = this;
-       var chklistPromise = new Promise( function resolver(resolve, reject) {
-           self.isCklsInTable().then(function(data) {
-              if ((!_.isEmpty(data)) && (data.Count > 0)) {
-                 reject("Data Exist");
-              } else {
-                 resolve (self.insertCheckListItem());
-              }
-           });/*.then((data) => {
-               if (data === "Data Exist") {
-                 dpbutils.logerror(`Checklist item ${self.chklistname} already exist in ${BoConfig.cklsTable} table. `);
-                 throw Error("EEEEEEEEEEEEEEERRRRRRRRRRR")
-               } else {
-                 if (_.isEmpty(data)) {
-                  dpbutils.loginfo(`Insert of ${self.chklistname} completed succesfully`);
-                  resolve("successful")
+    createNewChecklist: function createNewChecklist() {
+      var self = this;
+      var chklistPromise = new Promise( function resolver(resolve, reject) {
+          self.isCklsInTable().then(
+            function(data) {
+                if ((data.Count === 0)) {
+                  return self.insertCheckListItem();
+                } else {
+                    if (data.Count > 0) {
+                      var msgExtension = `found in "createNewChecklist" for userid:${this.userid} with Checklistname:${this.chklistname} `
+                      var errData = dpbutils.getErrMsg("DuplicateRecord", msgExtension);
+                      return Promise.resolve(errData)
+                    }
                 }
-              }
-           });/*.catch ((err) => {
-                // dpbutils.errorHandler(err, thisFilename, `Put of new checklist item "${self.chklisname}" was unsucessful`, "");
-                reject(`Data for ${self.chklistname} already exist in table`)
-           });*/
-       });  // end of new Promise
-       return chklistPromise;
-     },
+            }
+          ).then(
+            function (data) {
+                 if (_.isEmpty(data)) {
+                     resolve("successful")
+                 } else if  (data.search(/DuplicateRecord/ > -1)) {
+                     resolve(data);
+                 }
+            },
+            function (err) {
+                dpbutils.logerr(err);
+            }
+         );
+      });  // end of new Promise
+      return chklistPromise;
+    },
+
+    //  createNewChecklist: function createNewChecklist() {
+    //    var self = this;
+    //    var chklistPromise = new Promise( function resolver(resolve, reject) {
+    //        self.isCklsInTable().then(function(data) {
+    //           if ((!_.isEmpty(data)) && (data.Count > 0)) {
+    //              reject("Data Exist");
+    //           } else {
+    //              resolve (self.insertCheckListItem());
+    //           }
+    //        });/*.then((data) => {
+    //            if (data === "Data Exist") {
+    //              dpbutils.logerror(`Checklist item ${self.chklistname} already exist in ${BoConfig.cklsTable} table. `);
+    //              throw Error("EEEEEEEEEEEEEEERRRRRRRRRRR")
+    //            } else {
+    //              if (_.isEmpty(data)) {
+    //               dpbutils.loginfo(`Insert of ${self.chklistname} completed succesfully`);
+    //               resolve("successful")
+    //             }
+    //           }
+    //        });/*.catch ((err) => {
+    //             // dpbutils.errorHandler(err, thisFilename, `Put of new checklist item "${self.chklisname}" was unsucessful`, "");
+    //             reject(`Data for ${self.chklistname} already exist in table`)
+    //        });*/
+    //    });  // end of new Promise
+    //    return chklistPromise;
+    //  },
 
      // ========================================================================
      //  TASK TABLE FUNCTIONS
@@ -438,102 +473,78 @@ Checklist.prototype = {
           return db_query.executeDbRequest();
      },
 
-     // Note addTask function does a number of operations which amounts to 1 RCU and 2 WCU
-     // Step1: get userCaterories from checklist table
-     // Step2: insert new taskname in database
-     // Step3: use task assetid to insert task into userCategories object
-     // Step4: update userCategories in Checklist table
-    //  addTask: function addTask(taskname, taskCategoryName) {
-    //     var self = this;
-    //     if (taskCategoryName == undefined) {taskCategoryName = "_root_";}
-    //     this.getUserCategoriesFromTbl().then(function(data) {   // Step 1
-    //        if (db_query.hasResultSet(data)) {
-    //          if (data.Count === 1) {
-    //            self.setUserCategoryProp(data.Items[0].userCategories);  // save user categories in object property
-    //            return self.insertTask(taskname, taskCategoryName); // Step 2  - also saves task_category in clipboard
-    //          } else {
-    //            if (data.Count === 0) {
-    //              return Promise.resolve("No records found");
-    //            } else {
-    //              if  (data.Count > 1 ) {
-    //                  throw Error(dpbutils.errorMsg.getErrMsg("DBCountError" , "1 item instead received " + data.Count))
-    //              }
-    //            }
-    //          }
-    //        }
-    //        // dpbutils.loginfo(`'${thisFilename}' Ended`);
-    //     }).then(function(data) {
-    //         var task_category = self.getFromClipboard("task_category");
-    //         debugger;
-    //         if (data === "No records found") {
-    //           return Promise.resolve("No record found for Checklist: " + task_category);
-    //         } else {   // Step2: insert task into task table
-    //           if (_.isEmpty(data)) {
-    //              var user_categories = self.getUserCategoryProp();
-    //              var asset_id = self.getFromClipboard("asset_id");
-    //              self.addTaskIdTo(task_category, asset_id);  // Step 3
-    //              return self.updCklsTableWithUserCat(user_categories);  // Step 4
-    //           }
-    //        }
-    //     }).then (function (data) {
-    //        if (_.isEmpty(data)) {
-    //          console.log("succesfully udpated");
-    //        } else {
-    //          dpbutils.logerror("BO method addTask encountered issue " + data);
-    //        }
-    //     }).catch(function(err) {
-    //        // Call errorhandler with err object, this filename, the operationName, and Parms
-    //        dpbutils.errorHandler(err, thisFilename, "BO method addTask ", "");
-    //     });
-    //  },
 
+    // Note addTask function does a number of operations which amounts to 1 RCU and 2 WCU
+    // Step1: get userCaterories from checklist table
+    // Step2: insert new taskname in database
+    // Step3: use task assetid to insert task into userCategories object
+    // Step4: update userCategories in Checklist table
      addTask: function addTask(taskname, taskCategoryName) {
-        self = this;
+        var self = this;
         if (taskCategoryName == undefined) {taskCategoryName = "_root_";}
-        self.saveToClipboard("task_name", taskname);
-        self.saveToClipboard("task_category", taskCategoryName);
-        return new Promise (function resolver(resolve, reject) {
-             self.getUserCategoriesFromTbl().then(function(data) {   // Step 1
-                 if (!_.isEmpty(data) && data.Count === 1) {
-                    self.setUserCategoryProp(data.Items[0].userCategories);  // save user categories in object property
-                     var taskname = self.getFromClipboard("task_name");
-                     var taskCategoryName = self.getFromClipboard("task_category");
-                     return self.insertTask(taskname, taskCategoryName); // Step 2  - also saves task_category in clipboard
-                 } else {
-                     if (data.Count === 0) {
-                       reject("No records found for " + self.chklistname);
-                     }
-                     if  (data.Count > 1 ) {
-                       reject(dpbutils.errorMsg.getErrMsg("DBCountError" , "1 item instead received " + data.Count));
-                     }
+        this.saveToClipboard("task_name", taskname);
+        this.saveToClipboard("task_category", taskCategoryName);
+        var promise = new Promise (function resolver(resolve, reject) {
+        // return new Promise (function resolver(resolve, reject) {
+          self.getUserCategoriesFromTbl().then(function (data) {   // Step 1
+               if (!_.isEmpty(data) && data.Count === 1) {  // successfully retrieved UserCateories; do insert
+                   self.setUserCategoryProp(data.Items[0].userCategories);  // save user categories in object property
+                   var taskname = self.getFromClipboard("task_name");
+                   var taskCategoryName = self.getFromClipboard("task_category");
+                   return self.insertTask(taskname, taskCategoryName); // Step 2  - also saves task_category in clipboard
+               } else {
+                   if (data.Count === 0) {
+                      var msgExtension = "Checklist:"+self.chklistname  + " userid:"+self.userid;
+                      var errData = dpbutils.getErrMsg("NoRecordsFound", msgExtension);
+                      return Promise.resolve(errData);
+                   }
+                   if  (data.Count > 1 ) {
+                      var msgExtension = "Expected count:1" + " Received count:"+ data.Count + " Checklist:"+self.chklistname +
+                             " userid:"+self.userid + " taskname:"+ self.getFromClipboard("task_name");
+                      var errData = dpbutils.getErrMsg("NotSingleton", msgExtension);
+                      // throw Error(errData);
+                      return Promise.resolve(errData);
+                   }
+               }
+            } // end then funnction data
+          ).then(
+              function(data) {
+                  if (_.isEmpty(data)) {  // insert task completed succesfully; do update
+                        var task_category = self.getFromClipboard("task_category");
+                        var user_categories = self.getUserCategoryProp();
+                        var asset_id = self.getFromClipboard("asset_id");
+                        self.addTaskIdTo(task_category, asset_id);  // Step 3
+                        return self.updCklsTableWithUserCat();  // Step 4
+                  // Insert did not complete succesfully; test why below
+                  } else if (data.search(/NoRecordsFound:/i) > -1) {
+                         return Promise.resolve(data);    // Propagate to client
+                  } else if (data.search(/NotSingleton/i) > -1) {
+                         return Promise.resolve(data);
+                  } else  { // insert failed for some unknown reason
+                     var asset_id = self.getFromClipboard("asset_id");
+                     var msgExtension = 'during "addTask" for ' + ' user:'+self.userid +
+                           ' checklistname:'+this.chklistname +  ' assetid:'+asset_id;
+                     var errData = dpbutils.errorMsg.getErrMsg("SystemException", msgExtension);
+                     throw Error(errData);
                  }
-                 // dpbutils.loginfo(`'${thisFilename}' Ended`);
-              }).then(function(data) {
-                  // if (data === "No records found") {
-                  //   return Promise.resolve("No record found for Checklist: " + task_category);
-                  // } else {   // Step2: insert task into task table
-                    if (_.isEmpty(data)) {
-                       var task_category = self.getFromClipboard("task_category");
-                       var user_categories = self.getUserCategoryProp();
-                       var asset_id = self.getFromClipboard("asset_id");
-                       self.addTaskIdTo(task_category, asset_id);  // Step 3
-                       resolve(self.updCklsTableWithUserCat(user_categories));  // Step 4
-                    }
-                //  }
-              })/*.then (function (data) {
-                 if (_.isEmpty(data)) {
-                   console.log("succesfully udpated");
-                 } else {
-                   dpbutils.logerror("BO method addTask encountered issue " + data);
+              } // end of function(data)
+          ).then
+              (function (data) {
+                 if (_.isEmpty(data)) {  // If empty, updCklsTableWithUserCat completed
+                       resolve("successful");
+                 } else if (data.search(/NoRecordsFound:/i) > -1) {
+                      resolve(data);    // Propagate to client
+                 } else if (data.search(/NotSingleton/i) > -1) {
+                      resolve(data);    // Propagate to client
                  }
-              }).catch(function(err) {
-                 // Call errorhandler with err object, this filename, the operationName, and Parms
-                 dpbutils.errorHandler(err, thisFilename, "BO method addTask ", "");
-              }); */
-        });
-     },
-
-
+              },
+              function (err) {
+                 dpbutils.logerror(err);
+              }
+         );
+      }); // outter of  return promise
+      return promise;
+   },
 
 
      // ========================================================================
