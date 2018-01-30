@@ -148,8 +148,16 @@ DbPutItem.prototype = {
 } /* end of DbPutItem.prototype */
 
 /* ************************************************************************ */
-/* Db update helper functions                                               */
+/* Db update helper functions: see sample syntax below                      */
 /* ************************************************************************ */
+// db_updater = new dbtools.DbUpdateItem()
+//     .setTableName("AppSettings")
+//     .setPrimaryKey("userid", "db00001")
+//     .setSortKey("appcode","hmc")
+//     .incrementValueBy(1).forAttribute("lastChecklistId")
+//     .updateAttrib("backgroundImage").withValue("http://www.someurl.com");
+//     .updateAttrib("lastChecklistId").withValue(747)
+//     .onlyIf("lastChecklistId").is("=").theValue(3); // condition expression
 
 function DbUpdateItem ()  {
   this.parameter = {};
@@ -264,8 +272,18 @@ DbUpdateItem.prototype = {
 }
 
 /* ************************************************************************ */
-/* Db delete helper functions                                               */
+/* Db delete helper functions: see sample syntax below                      */
 /* ************************************************************************ */
+// var db_deleter = new dbtools.DbDeleteItem()
+//     .setTableName(BoConfig.taskTable)
+//     .setPrimaryKey("userid", this.userid)
+//     .setSortKey("assetid",asset_id);
+//     .whereAttribute("maxchecklists").is("=").toValue(3);
+//     .whereAttributeNotExist("record_label")
+//     .returnOldValues(false);
+//    // Execute database call
+//    return db_deleter.executeDbRequest();
+   
 function DbDeleteItem ()  {
   this.parameter = {};
   this.parameter.TableName = undefined;
