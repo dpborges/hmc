@@ -1,12 +1,14 @@
-var awsconfig = require("./aws");
+var awsconfig = require("./aws");   //Used-For-Local
 var _         = require("lodash");
 const uuidv1 = require('uuid/v1');
 const uuidv4 = require('uuid/v4');
 
-var schema    = require("./../dbutils/schema");
+// var schema    = require("./../dbutils/schema");
+const AWS = awsconfig.AWS;               // Used-For-Local
+const dynamodb = new AWS.DynamoDB.DocumentClient(); // Used-For-Local
 
-
-AWS = awsconfig.AWS;
+//Used-For-AWS const AWS = require('aws-sdk');
+//Used-For-AWS const dynamodb = new AWS.DynamoDB({region: 'us-east-1', apiVersion: '2012-08-10'});
 
 /* ************************************************************************ */
 /* DbGetitem helper functions                                               */
@@ -43,14 +45,14 @@ DbGetItem.prototype = {
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
-          var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.get(self.parameter, function(err, data) {
+          // var dynamodb = new AWS.DynamoDB.DocumentClient();  //Used-For-Local
+          dynamodb.get(self.parameter, function(err, data) {
              if (err) {
                reject(err);
              } else {
                resolve(data);
              }
-           }); /* end of docClient.get */
+           }); /* end of dynamodb.get */
         } /* end of resolver */
     );
     return promise;
@@ -127,15 +129,17 @@ DbPutItem.prototype = {
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
-          var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.put(self.parameter, function(err, data) {
+          //  var dynamodb = new AWS.DynamoDB.DocumentClient();  //Used-For-Local
+ //Used-For-AWS var dynamodb = new AWS.DynamoDB();
+ //Used-For-AWS dynamodb.putItem(self.parameter, function(err, data) {
+          dynamodb.put(self.parameter, function(err, data) {     //Used-For-Local  
              if (err) {
                reject(err);
                //  reject(err.name); COMMENTED THIS OUT ON 12/22 IF GET UNEXPECTED OUTPUT, REVERT BACK TO THIS CODE
              } else {
                resolve(data);
              }
-           }); /* end of docClient.get */
+           }); /* end of dynamodb.get */
         } /* end of resolver */
     );
     return promise;
@@ -243,14 +247,15 @@ DbUpdateItem.prototype = {
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
-          var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.update(self.parameter, function(err, data) {
+          // var dynamodb = new AWS.DynamoDB.DocumentClient();  //Used-For-Local
+//Used-For-AWS var dynamodb = new AWS.DynamoDB({region: 'us-east-1', apiVersion: '2012-08-10'});
+          dynamodb.update(self.parameter, function(err, data) {
              if (err) {
                reject(err);
              } else {
                resolve(data);
              }
-           }); /* end of docClient.get */
+           }); /* end of dynamodb.get */
         } /* end of resolver */
     );
     return promise;
@@ -283,7 +288,7 @@ DbUpdateItem.prototype = {
 //     .returnOldValues(false);
 //    // Execute database call
 //    return db_deleter.executeDbRequest();
-   
+
 function DbDeleteItem ()  {
   this.parameter = {};
   this.parameter.TableName = undefined;
@@ -364,14 +369,14 @@ DbDeleteItem.prototype = {
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
-          var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.delete(self.parameter, function(err, data) {
+          // var dynamodb = new AWS.DynamoDB.DocumentClient();
+          dynamodb.delete(self.parameter, function(err, data) {
              if (err) {
                reject(err);
              } else {
                resolve(data);
              }
-           }); /* end of docClient.get */
+           }); /* end of dynamodb.get */
         } /* end of resolver */
     );
     return promise;
@@ -393,8 +398,21 @@ DbDeleteItem.prototype = {
 }
 
 /* ************************************************************************ */
-/* Db query helper functions                                               */
+/* Db query helper functions: sample syntax below                           */
 /* ************************************************************************ */
+// db_query = new dbtools.DbQuery()
+//   .setTableName("AppSettings")
+//   .setIndexName("AppSettingsLsi1")
+//   .setPrimaryKey("userid", "db00550")   // This setS KeyCondition Expression and
+//                                            // and Expression Attribute Values
+//   .selectItemsWherePrimaryKey("userid").is("=").theValue("db00002")
+//   .theSortKey("appcode").is("=").theValue("hmc")
+//   .theSortKey("SongTitle").matchPattern("begins_with").theValue("Today")
+//   .where("price").is("<").theValue("1.00");   // Filter Criteria
+//   .returnOnly("userid, appcode, defaultLoginScreen, backgroundImage, maxchecklists, locationReminders, assetid");   // projection expression; list of attributes
+// db_query.executeDbRequest(db_query.dbParms()).then(....
+
+
 function DbQuery ()  {
   this.parameter = {};
   this.parameter.TableName = undefined;
@@ -570,14 +588,14 @@ DbQuery.prototype = {
      var promise = new Promise(
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
-          var docClient = new AWS.DynamoDB.DocumentClient();
-          docClient.query(self.parameter, function(err, data) {
+          // var dynamodb = new AWS.DynamoDB.DocumentClient();
+          dynamodb.query(self.parameter, function(err, data) {
              if (err) {
                reject(err);
              } else {
                resolve(data);
              }
-           }); /* end of docClient.get */
+           }); /* end of dynamodb.get */
         } /* end of resolver */
     );
     return promise;
@@ -639,14 +657,14 @@ DbBatchDelete.prototype = {
    // Provide array of primary key and sort key values to delete in params
     var promise = new Promise(
          function resolver(resolve, reject) {
-           var docClient = new AWS.DynamoDB.DocumentClient();
-           docClient.batchWrite(self.parameter, function(err, data) {
+          //  var dynamodb = new AWS.DynamoDB.DocumentClient();
+           dynamodb.batchWrite(self.parameter, function(err, data) {
                if (err) {
                  reject(err);
                } else {
                  resolve(data);
                }
-           }); /* end of docClient.get */
+           }); /* end of dynamodb.get */
          } /* end of resolver */
      );
      return promise;
@@ -689,14 +707,14 @@ DbBatchPut.prototype = {
    // Provide array of primary key and sort key values to delete in params
     var promise = new Promise(
          function resolver(resolve, reject) {
-           var docClient = new AWS.DynamoDB.DocumentClient();
-           docClient.batchWrite(self.parameter, function(err, data) {
+          //  var dynamodb = new AWS.DynamoDB.DocumentClient();
+           dynamodb.batchWrite(self.parameter, function(err, data) {
                if (err) {
                  reject(err);
                } else {
                  resolve(data);
                }
-           }); /* end of docClient.get */
+           }); /* end of dynamodb.get */
          } /* end of resolver */
      );
      return promise;

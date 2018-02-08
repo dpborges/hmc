@@ -1,10 +1,26 @@
-const winston  = require('winston');
 var   _        = require("lodash");
 const moment   = require("moment");
 require("moment-timezone");
 
 
 const loginfo_enabled = true;
+const logmsg_enabled  = true;
+
+/* ********************************************************************* */
+/* New Logging functions                                                 */
+/* ********************************************************************* */
+const loginfo = (info) => {
+  if (loginfo_enabled) {
+    var logformat = "YYYY-MM-DD hh:mm:ss SSSS";
+    console.info(`info:  ${moment().format(logformat)} ${info} `);
+  }
+}
+
+const logerror = (errortext, errorstack) =>  {
+  var logformat = "YYYY-MM-DD hh:mm:ss SSSS";
+  if (!errorstack) errorstack = "";
+  console.error(`error: ${moment().format(logformat)} ${errortext} ${errorstack}  `);
+}
 
 
 /* ********************************************************************* */
@@ -16,21 +32,25 @@ const pluckFilename = (filename, directory) =>  {
   return filename.substring(directory.length+1, filename.length);
 }
 
+// OLD FUNCTION loginfo
 // Used to log info. Can be turned off by settings 'loginfo_enabled' to false
-const loginfo = (infotext) =>  {
-  if (loginfo_enabled) {
-    var logformat = "YYYY-MM-DD hh:mm:ss SSSS";
-    winston.info(` ${moment().format(logformat)} ${infotext}  `);
-  }
-}
+// const loginfo = (infotext) =>  {
+//   if (loginfo_enabled) {
+//     var logformat = "YYYY-MM-DD hh:mm:ss SSSS";
+//     winston.info(` ${moment().format(logformat)} ${infotext}  `);
+//   }
+// }
 
+// OLD FUNCTION loginfo
 // Log error text
-const logerror = (errortext, errorstack) =>  {
-  var logformat = "YYYY-MM-DD hh:mm:ss SSSS";
-  if (!errorstack) errorstack = "";
-  winston.error(`${moment().format(logformat)} ${errortext} ${errorstack}  `);
-}
+// const logerror = (errortext, errorstack) =>  {
+//   var logformat = "YYYY-MM-DD hh:mm:ss SSSS";
+//   if (!errorstack) errorstack = "";
+//   winston.error(`${moment().format(logformat)} ${errortext} ${errorstack}  `);
+// }
 
+
+//used fo dynamodb errors
 const errorHandler = function errorHandler (err, filename, operationName, parmUsed) {
   // For some reason, there are times that err.name and err.message are null
   // and err object itself has the err.name. If so, set err.name to err value
@@ -71,15 +91,24 @@ function currentDateTimestamp(dateString) {
 /* ********************************************************************* */
 /* Error Messages: takes an error message name and message extension       */
 /* ********************************************************************* */
-const getErrMsg = function getErrMsg(msgName, msgExt = "")  {
+// Pass in name value pairs related to type error
+const getErrMsg = function getErrMsg(msgName, msgExt )  {
     var errorTable = {
-        DuplicateRecord: "Duplicate Record Error: Record already exist for " + msgExt,
-        MissingParms:    "Missing Parms Error: Missing: " + msgExt,
-        DBCountError:    "DB Count Error: Expected " + msgExt,
+        DuplicateRecord: "DuplicateRecord: Record already exist in database for " + msgExt,
+        MissingParms:    "MissingParms: Missing parameters: " + msgExt,
+        NotSingleton :   "NotSingleton: Did not get back a Singleton result as expected: " + msgExt,
+        NoRecordsFound:  "NoRecordsFound: Lookup returned no results " + msgExt,
+        SystemException:   "SystemException: system error or uncaught exception "  + msgExt,
     }
-
     return errorTable[msgName];
 }
+
+function DuplicateRecordError(message) {
+    this.name = "DuplicateRecordError";
+    this.message = message;
+}
+DuplicateRecordError.protype = new Error();
+
 
 
 module.exports = {
@@ -89,5 +118,6 @@ module.exports = {
   loginfo_enabled,
   errorHandler,
   currentDateTimestamp,
+  DuplicateRecordError,
   getErrMsg
 }
