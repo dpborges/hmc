@@ -54,13 +54,13 @@ sed "s/AppSettings/AppSettings-test/" $baseDir$targetDir/AppManager.js > AppMana
 rm AppManager.js
 mv AppManager.js-new AppManager.js
 
-sed "s/\/\/Used-For-AWS //g" $baseDir$targetDir/AppManager.js > AppManager.js-new
-rm AppManager.js
-mv AppManager.js-new AppManager.js
-
-sed  's/platform = "local"/platform = "aws"/' $baseDir$targetDir/AppManager.js > AppManager.js-new
-rm AppManager.js
-mv AppManager.js-new AppManager.js
+# sed "s/\/\/Used-For-AWS //g" $baseDir$targetDir/AppManager.js > AppManager.js-new
+# rm AppManager.js
+# mv AppManager.js-new AppManager.js
+#
+# sed  's/platform = "local"/platform = "aws"/' $baseDir$targetDir/AppManager.js > AppManager.js-new
+# rm AppManager.js
+# mv AppManager.js-new AppManager.js
 
 
 # Make changes to apmCreateAppSettings client

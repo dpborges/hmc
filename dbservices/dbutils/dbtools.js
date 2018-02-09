@@ -1,14 +1,15 @@
-var awsconfig = require("./aws");   //Used-For-Local
+// var awsconfig = require("./aws");   //Used-For-Local
+var   AWS = require("aws-sdk");
 var _         = require("lodash");
 const uuidv1 = require('uuid/v1');
 const uuidv4 = require('uuid/v4');
 
 // var schema    = require("./../dbutils/schema");
-const AWS = awsconfig.AWS;               // Used-For-Local
-const dynamodb = new AWS.DynamoDB.DocumentClient(); // Used-For-Local
+// const AWS = awsconfig.AWS;               // Used-For-Local
 
-//Used-For-AWS const AWS = require('aws-sdk');
-//Used-For-AWS const dynamodb = new AWS.DynamoDB({region: 'us-east-1', apiVersion: '2012-08-10'});
+const dynamodb = new AWS.DynamoDB.DocumentClient({region: "us-east-1", endpoint: "http://localhost:8000"}); // Used-For-Local
+//Used-For-AWS const dynamodb = new AWS.DynamoDB.DocumentClient({region: "us-east-1"});
+
 
 /* ************************************************************************ */
 /* DbGetitem helper functions                                               */
@@ -86,32 +87,33 @@ function DbPutItem (tablename, attribValues)  {
   this.parameter = {};
   this.parameter.TableName = tablename;
   this.parameter.Item = attribValues;
+  // this.mapValuestoAttribs(this.getTableDef(tablename), attribValues);
 };
 
 DbPutItem.prototype = {
 
-  getTableDef: function (tablename) {
-    // console.log("<<< getTableDef >>>> \n" + JSON.stringify(schema.tabledef[tablename], null, 2));
-    return schema.tabledef[tablename];
-  },
+  // getTableDef: function (tablename) {
+  //   // console.log("<<< getTableDef >>>> \n" + JSON.stringify(schema.tabledef[tablename], null, 2));
+  //   return schema.tabledef[tablename];
+  // },
 
-  mapValuestoAttribs: function (tableDef, attribValues) {
-    var keys = Object.keys(attribValues);
-
-    var tabledefKeys = Object.keys(tableDef.Item); // get number of attributes on table
-
-    if (tabledefKeys.length !== keys.length) {
-      // throw exception, if attributes on table do match number of put values,
-      throw Error("Schema Error; put values do not match number of attributes on schema definition");
-    }
-
-    /* for all the values passed in with valueObject, update the table defintion */
-    /* with these values. */
-    for (var i = 0; i < keys.length; i++) {
-        var keytype = Object.keys(tableDef.Item[[keys[i]]]);
-        tableDef.Item[[keys[i]]] = attribValues[keys[i]];
-    }
-  },
+  // mapValuestoAttribs: function (tableDef, attribValues) {
+  //   var keys = Object.keys(attribValues);
+  //
+  //   var tabledefKeys = Object.keys(tableDef.Item); // get number of attributes on table
+  //
+  //   if (tabledefKeys.length !== keys.length) {
+  //     // throw exception, if attributes on table do match number of put values,
+  //     throw Error("Schema Error; put values do not match number of attributes on schema definition");
+  //   }
+  //
+  //   /* for all the values passed in with valueObject, update the table defintion */
+  //   /* with these values. */
+  //   for (var i = 0; i < keys.length; i++) {
+  //       var keytype = Object.keys(tableDef.Item[[keys[i]]]);
+  //       tableDef.Item[[keys[i]]] = attribValues[keys[i]];
+  //   }
+  // },
 
   dbParms:  function dbParms () {
     // return JSON.stringify(this.parameter, null, 2);
@@ -130,9 +132,9 @@ DbPutItem.prototype = {
          function resolver(resolve, reject) {
            // Provide primary key and sort key values in the dynaomdb params object
           //  var dynamodb = new AWS.DynamoDB.DocumentClient();  //Used-For-Local
- //Used-For-AWS var dynamodb = new AWS.DynamoDB();
- //Used-For-AWS dynamodb.putItem(self.parameter, function(err, data) {
-          dynamodb.put(self.parameter, function(err, data) {     //Used-For-Local  
+ //UsedForAWS var dynamodb = new AWS.DynamoDB();
+ //UsedForAWS dynamodb.putItem(self.parameter, function(err, data) {
+          dynamodb.put(self.parameter, function(err, data) {     
              if (err) {
                reject(err);
                //  reject(err.name); COMMENTED THIS OUT ON 12/22 IF GET UNEXPECTED OUTPUT, REVERT BACK TO THIS CODE
@@ -140,7 +142,7 @@ DbPutItem.prototype = {
                resolve(data);
              }
            }); /* end of dynamodb.get */
-        } /* end of resolver */
+         } /* end of resolver */
     );
     return promise;
   },
